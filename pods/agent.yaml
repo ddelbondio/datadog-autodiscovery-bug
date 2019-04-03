@@ -24,8 +24,6 @@ spec:
           - {containerPort: 8126, name: traceport, protocol: TCP}
         env:
           - {name: DD_API_KEY, value: test}
-          - {name: KUBERNETES, value: "true"}
-          - {name: DD_HEALTH_PORT, value: "5555"}
           - name: DD_KUBERNETES_KUBELET_HOST
             valueFrom:
               fieldRef:
@@ -34,7 +32,6 @@ spec:
           - {name: dockersocket, mountPath: /var/run/docker.sock}
           - {name: procdir, mountPath: /host/proc, readOnly: true}
           - {name: cgroups, mountPath: /host/sys/fs/cgroup, readOnly: true}
-          - {name: s6-run, mountPath: /var/run/s6}
           - {name: datadog-config, mountPath: /etc/datadog-agent/datadog.yaml, subPath: datadog.yaml}
         livenessProbe:
           httpGet:
@@ -49,6 +46,5 @@ spec:
         - {name: dockersocket, hostPath: {path: /var/run/docker.sock}}
         - {name: procdir, hostPath: {path: /proc}}
         - {name: cgroups, hostPath: {path: /sys/fs/cgroup}}
-        - {name: s6-run, emptyDir: {}}
         - {name: datadog-config, configMap: {name: datadog}}
 

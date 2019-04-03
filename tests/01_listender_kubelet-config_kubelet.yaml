@@ -7,6 +7,7 @@ data:
   datadog.yaml: |
     api_key: "test"
     dd_url: "http://fake-datadog.datadog-agent.svc.cluster.local"
+    health_port: 5555
     listeners:
     - name: kubelet
     config_providers:
