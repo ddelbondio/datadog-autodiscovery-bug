@@ -36,7 +36,7 @@ waitForPodDeletion() {
 }
 
 startAgent() {
-  kubectl apply -f pods/agent.yaml
+  sed "s/\$DD_EXTRA_LISTENERS/$DD_EXTRA_LISTENERS/; s/\$DD_EXTRA_CONFIG_PROVIDERS/$DD_EXTRA_CONFIG_PROVIDERS/" pods/agent.yaml | kubectl apply -f -
   kubectl -n $NS rollout status deployment/datadog-agent
 }
 
@@ -67,6 +67,8 @@ deleteHttpdPod() {
   podName="$(getHttpdPodName)"
   kubectl -n $NS delete pod "$podName"
   waitForPodDeletion "$podName"
+  podName="$(getHttpdPodName)"
+  waitForPodReady "$podName"
 }
 
 getAgentPodName() {
@@ -91,14 +93,14 @@ grepAgentLogs() {
 }
 
 runTest() {
-  configmap=$1
-  testName=$(basename "$configmap")
+  config=$1
+  testName=$(basename "$config")
   echo "[$(date +"%H:%M:%S")] Running test ${testName}"
   echo "-------------------------"
   # clear any existing logs
   mkdir -p "logs/${testName}"
   rm "logs/${testName}"/* > /dev/null 2>&1 || true
-  kubectl apply -f $configmap > /dev/null
+  source $config
   
   # Test starting the agent when a pod is running
   startHttpd > /dev/null
@@ -123,6 +125,7 @@ runTest() {
   # Test restarting the pod when the agent is already running
   startHttpd > /dev/null
   startAgent > /dev/null
+  sleep 5
   restartHttpd
   
   echo -n "[$(date +"%H:%M:%S")] Pod: restart, Agent: running => "
@@ -131,6 +134,7 @@ runTest() {
   # Test deleting the pod when the agent is already running
   startHttpd > /dev/null
   startAgent > /dev/null
+  sleep 5
   deleteHttpdPod > /dev/null
   
   echo -n "[$(date +"%H:%M:%S")] Pod: delete, Agent: running => "
@@ -157,4 +161,4 @@ for file in tests/*; do
 done
 
 echo "shutting down"
-kubectl delete ns datadog-agent
+kubectl delete ns $NS
