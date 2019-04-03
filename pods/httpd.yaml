@@ -1,0 +1,22 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: httpd
+  namespace: datadog-agent
+spec:
+  selector:
+    matchLabels:
+      app: httpd
+  replicas: 1
+  template:
+    metadata:
+      name: httpd
+      labels:
+        app: httpd
+    spec:
+      containers:
+      - image: httpd-autodicovery
+        imagePullPolicy: IfNotPresent
+        name: httpd
+        ports:
+          - {containerPort: 80, name: http, protocol: TCP}

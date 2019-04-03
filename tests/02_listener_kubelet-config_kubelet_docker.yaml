@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datadog
+  namespace: datadog-agent
+data:
+  datadog.yaml: |
+    api_key: "test"
+    dd_url: "http://fake-datadog.datadog-agent.svc.cluster.local"
+    listeners:
+    - name: kubelet
+    config_providers:
+    - name: kubelet
+      polling: true
+    - name: docker
+      polling: true

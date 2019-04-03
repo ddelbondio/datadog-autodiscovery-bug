@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: fake-datadog
+  namespace: datadog-agent
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: fake-datadog
+    spec:
+      containers:
+      - name: api
+        image: datadog/fake-datadog:latest
+      - name: mongo
+        image: mongo:3.6.3
