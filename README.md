@@ -81,37 +81,38 @@ service/fake-datadog unchanged
 
 Running tests
 
-[14:12:03] Running test 01_listender_kubelet-config_kubelet.yaml
+[22:22:52] Running test 01_listender_kubelet-config_kubelet.inc
 -------------------------
-[14:12:09] Pod: running, Agent: start => fail
-[14:13:26] Pod: start, Agent: running => fail
-[14:14:49] Pod: restart, Agent: running => fail
-[14:16:00] Pod: delete, Agent: running => fail
+[22:22:55] Pod: running, Agent: start => fail
+[22:24:19] Pod: start, Agent: running => fail
+[22:25:47] Pod: restart, Agent: running => fail
+[22:28:46] Pod: delete, Agent: running => fail
 
 
-[14:17:10] Running test 02_listener_kubelet-config_kubelet_docker.yaml
+[22:29:08] Running test 02_listener_kubelet-config_kubelet_docker.inc
 -------------------------
-[14:17:16] Pod: running, Agent: start => fail
-[14:18:40] Pod: start, Agent: running => fail
-[14:20:07] Pod: restart, Agent: running => fail
-[14:21:16] Pod: delete, Agent: running => fail
+[22:29:12] Pod: running, Agent: start => fail
+[22:30:30] Pod: start, Agent: running => fail
+[22:32:06] Pod: restart, Agent: running => fail
+[22:36:06] Pod: delete, Agent: running => fail
 
 
-[14:22:33] Running test 03_listener_kubelet_docker-config_kubelet.yaml
+[22:36:45] Running test 03_listener_kubelet_docker-config_kubelet.inc
 -------------------------
-[14:22:39] Pod: running, Agent: start => success
-[14:23:18] Pod: start, Agent: running => success
-[14:23:49] Pod: restart, Agent: running => fail
-[14:25:00] Pod: delete, Agent: running => fail
+[22:36:49] Pod: running, Agent: start => success
+[22:37:19] Pod: start, Agent: running => fail
+[22:38:47] Pod: restart, Agent: running => fail
+[22:42:36] Pod: delete, Agent: running => fail
 
 
-[14:26:21] Running test 04_listener_kubelet_docker-config_kubelet_docker.yaml
+[22:43:18] Running test 04_listener_kubelet_docker-config_kubelet_docker.inc
 -------------------------
-[14:26:27] Pod: running, Agent: start => success
-[14:27:01] Pod: start, Agent: running => success
-[14:27:35] Pod: restart, Agent: running => fail
-[14:28:50] Pod: delete, Agent: running => fail
+[22:43:22] Pod: running, Agent: start => success
+[22:43:42] Pod: start, Agent: running => fail
+[22:44:59] Pod: restart, Agent: running => fail
+[22:48:07] Pod: delete, Agent: running => fail
 
 
 shutting down
+namespace "datadog-agent" deleted
 ```
