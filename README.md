@@ -4,6 +4,12 @@ When using Docker labels for autodiscovery there is a race condition in the agen
 
 This happens with all kind of configuration combinations.
 
+The relevant error seems to be 
+
+```
+[ AGENT ] 2019-04-03 12:36:46 UTC | WARN | (pkg/autodiscovery/autoconfig.go:529 in resolveTemplateForService) | error resolving template apache for service docker://c7fa540faf5ed71cb2186af54e513514dbfb03ae7505b05ee393546722c29d12: failed to extract IP address for container docker://c7fa540faf5ed71cb2186af54e513514dbfb03ae7505b05ee393546722c29d12, ignoring it. Source error: "container docker://c7fa540faf5ed71cb2186af54e513514dbfb03ae7505b05ee393546722c29d12 in PodList" not found
+```
+
 # Versions
 ## Docker
 ```
