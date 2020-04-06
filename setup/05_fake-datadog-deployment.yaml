@@ -1,9 +1,12 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fake-datadog
   namespace: datadog-agent
 spec:
+  selector:
+    matchLabels:
+      app: fake-datadog
   replicas: 1
   strategy:
     type: RollingUpdate
