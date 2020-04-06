@@ -34,6 +34,8 @@ spec:
             value: "$DD_EXTRA_LISTENERS"
           - name: DD_EXTRA_CONFIG_PROVIDERS
             value: "$DD_EXTRA_CONFIG_PROVIDERS"
+          - name: DD_KUBELET_WAIT_ON_MISSING_CONTAINER
+            value: "1"
         volumeMounts:
           - {name: dockersocket, mountPath: /var/run/docker.sock}
           - {name: procdir, mountPath: /host/proc, readOnly: true}
