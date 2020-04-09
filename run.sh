@@ -3,7 +3,7 @@
 set -euo pipefail
 
 NS=datadog-agent
-LOG_TIMEOUT="60s"
+#LOG_TIMEOUT="60s"
 
 waitForPodReady() {
   podName="$1"
@@ -36,7 +36,7 @@ waitForPodDeletion() {
 }
 
 startAgent() {
-  sed "s/\$DD_EXTRA_LISTENERS/$DD_EXTRA_LISTENERS/; s/\$DD_EXTRA_CONFIG_PROVIDERS/$DD_EXTRA_CONFIG_PROVIDERS/" pods/agent.yaml | kubectl apply -f -
+  kubectl apply -f pods/agent.yaml
   kubectl -n $NS rollout status deployment/datadog-agent
 }
 
@@ -46,51 +46,49 @@ stopAgent() {
   waitForPodDeletion "$podName"
 }
 
-startHttpd() {
-  kubectl apply -f pods/httpd.yaml
-  kubectl -n $NS rollout status deployment/httpd
+startWildfly() {
+  kubectl apply -f pods/wildfly.yaml
+  kubectl -n $NS rollout status deployment/wildfly
 }
 
-stopHttpd() {
-  podName="$(getHttpdPodName)"
-  kubectl delete --wait=true -f pods/httpd.yaml
+stopWildfly() {
+  podName="$(getWildflyPodName)"
+  kubectl delete --wait=true -f pods/wildfly.yaml
   waitForPodDeletion "$podName"
 }
 
-restartHttpd() {
-  podName="$(getHttpdPodName)"
+restartWildfly() {
+  podName="$(getWildflyPodName)"
   kubectl -n $NS exec "$podName" -- /bin/bash -c "kill 1"
   waitForPodReady "$podName"
 }
 
-deleteHttpdPod() {
-  podName="$(getHttpdPodName)"
+deleteWildflyPod() {
+  podName="$(getWildflyPodName)"
   kubectl -n $NS delete pod "$podName"
   waitForPodDeletion "$podName"
-  podName="$(getHttpdPodName)"
+  podName="$(getWildflyPodName)"
   waitForPodReady "$podName"
 }
 
 getAgentPodName() {
-  echo $(kubectl -n $NS get pods | grep "Running" | egrep -o "datadog-agent-[^ ]+")
+  echo "$(kubectl -n $NS get pods | grep "Running" | egrep -o "datadog-agent-[^ ]+")"
 }
 
-getHttpdPodName() {
-  echo $(kubectl -n $NS get pods | grep "Running" | egrep -o "httpd-[^ ]+")
+getWildflyPodName() {
+  echo "$(kubectl -n $NS get pods | grep "Running" | egrep -o "wildfly-[^ ]+")"
 }
 
-grepAgentLogs() {
-  logFile="$1"
-  text="$2"
-  count="$3"
-  agentPod="$(getAgentPodName)"
-  cmd="kubectl -n $NS logs -f $agentPod | tee -a "\"$logFile\"" | stdbuf -oL grep -m $count "\"$text\"" | head -n $count"
-  if [ $(timeout "$LOG_TIMEOUT" bash -c "$cmd" | wc -l) = "$count" ]; then
-    echo "success"
-  else
-    echo "fail"
-  fi
-}
+#grepAgentLogs() {
+#  logFile="$1"
+#  agentPod="$(getAgentPodName)"
+#  kubectl -n $NS logs -f $agentPod | tee -a "\"$logFile\""
+  #if [ "$(timeout "$LOG_TIMEOUT" bash -c "$cmd" | wc -l)" = "$count" ]; then
+  #  echo "success"
+  #else
+  #  echo "fail"
+  #fi
+#}
 
 runTest() {
   config=$1
@@ -100,65 +98,40 @@ runTest() {
   # clear any existing logs
   mkdir -p "logs/${testName}"
   rm "logs/${testName}"/* > /dev/null 2>&1 || true
-  source $config
+  source "$config"
   
-  # Test starting the agent when a pod is running
-  startHttpd > /dev/null
-  startAgent > /dev/null
-  
-  echo -n "[$(date +"%H:%M:%S")] Pod: running, Agent: start => "
-  grepAgentLogs "logs/${testName}/pod_running-agent_start.log" "Scheduling check apache with an interval" 1
-  
-  stopAgent > /dev/null
-  stopHttpd > /dev/null
-  
-  # Test starting the pod when the agent is already running
-  startAgent > /dev/null
-  startHttpd > /dev/null
-  
-  echo -n "[$(date +"%H:%M:%S")] Pod: start, Agent: running => "
-  grepAgentLogs "logs/${testName}/pod_start-agent_running.log" "Scheduling check apache with an interval" 1
-
-  stopAgent > /dev/null
-  stopHttpd > /dev/null
-
   # Test restarting the pod when the agent is already running
-  startHttpd > /dev/null
+  startWildfly > /dev/null
   startAgent > /dev/null
   sleep 5
-  restartHttpd
+  restartWildfly
   
   echo -n "[$(date +"%H:%M:%S")] Pod: restart, Agent: running => "
-  grepAgentLogs "logs/${testName}/pod_restart-agent_running.log" "Scheduling check apache with an interval" 2
+ # grepAgentLogs "logs/${testName}/ddagent-jmx.log"
+  kubectl -n $NS logs -f "$(getAgentPodName)" | tee -a "logs/${testName}/ddagent-jmx.log"
+  echo "Over"
 
-  # Test deleting the pod when the agent is already running
-  startHttpd > /dev/null
-  startAgent > /dev/null
-  sleep 5
-  deleteHttpdPod > /dev/null
-  
-  echo -n "[$(date +"%H:%M:%S")] Pod: delete, Agent: running => "
-  grepAgentLogs "logs/${testName}/pod_delete-agent_running.log" "Scheduling check apache with an interval" 2
-  
-  stopHttpd > /dev/null
-  stopAgent > /dev/null
+  #stopWildfly > /dev/null
+  #stopAgent > /dev/null
   echo -e "\n"
 }
 
 echo "Build image"
-docker build -t httpd-autodicovery autodiscover-image
+docker build -t ddagent-jmx datadog-agent-6-image
+docker build -t wildfly-jmx wildfly-image
+
 echo -e "\n"
 
 echo "Setting up"
 for file in setup/*; do
-  kubectl apply -f $file
+  kubectl apply -f "$file"
 done
 echo -e "\n"
 
 echo -e "Running tests\n"
 for file in tests/*; do
-  runTest $file
+  runTest "$file"
 done
 
 echo "shutting down"
-kubectl delete ns $NS
+#kubectl delete ns $NS

@@ -1,22 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: httpd
+  name: wildfly
   namespace: datadog-agent
 spec:
   selector:
     matchLabels:
-      app: httpd
+      app: wildfly
   replicas: 1
   template:
     metadata:
-      name: httpd
+      name: wildfly
       labels:
-        app: httpd
+        app: wildfly
     spec:
       containers:
-      - image: httpd-autodicovery
+      - image: wildfly-jmx
         imagePullPolicy: IfNotPresent
         name: httpd
         ports:
           - {containerPort: 80, name: http, protocol: TCP}
+          - {containerPort: 9990}

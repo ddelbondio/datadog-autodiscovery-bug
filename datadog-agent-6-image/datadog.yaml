@@ -1,0 +1,73 @@
+
+# Autodiscovery for Kubernetes
+listeners:
+  - name: kubelet
+  # needed to support docker label config templates
+  - name: docker
+config_providers:
+  - name: kubelet
+    polling: true
+  - name: docker
+    polling: true
+
+# Enable APM by setting the DD_APM_ENABLED envvar to true, or override this configuration
+apm_config:
+  enabled: false
+  apm_non_local_traffic: true
+
+# make sure the agent enables to process collection
+process_config:
+  enabled: true
+
+# Use java cgroup memory awareness
+jmx_use_container_support: true
+
+jmx_custom_jars:
+  - /usr/local/datadog-agent/lib/jboss-cli-client.jar
+
+# Since the autodiscovered checks don't necessarily include the pod name (e.g.
+docker_labels_as_tags:
+  "io.kubernetes.pod.name": pod
+
+# map our default labels to datadog tags
+kubernetes_pod_labels_as_tags:
+  app:               cs_app
+  env:               cs_env
+  type:              cs_type
+  # when we have the same pod running in the same node, also add the pod template hash
+  pod-template-hash: +kube_pod-template-hash
+
+# On some kubelet versions, containers can take up to a second to
+# register in the podlist. This option allows to wait for up to a given
+# number of seconds (in 250ms chunks) when a container does not exist in the podlist.
+# The kubelet on google does trigger that behaviour. This causes pods which are restarting
+# to be missed by the agent (with following error message: "failed to extract IP address for
+# container docker://..., ignoring it."
+kubelet_wait_on_missing_container: 2
+
+# Exclude all containers from kube-system and datadog to save costs.
+# They are either managed completely by google or only concern datadog.
+# We are able to see their metrics using the kube-state-metrics data.
+ac_exclude:
+  # Images used by kube
+  - 'image:(.*)gcr.io/google-containers/prometheus-to-sd'
+  - 'image:(.*)gcr.io/google_containers/busybox'
+  - 'image:(.*)gcr.io/google_containers/kube-proxy'
+  - 'image:(.*)gcr.io/stackdriver-agents/stackdriver-logging-agent'
+  - 'image:(.*)gcr.io/addon-resizer'
+  - 'image:(.*)gcr.io/cluster-proportional-autoscaler-amd64'
+  - 'image:(.*)gcr.io/defaultbackend-amd64'
+  - 'image:(.*)gcr.io/event-exporter'
+  - 'image:(.*)gcr.io/fluentd-gcp-scaler'
+  - 'image:(.*)gcr.io/heapster-amd64'
+  - 'image:(.*)gcr.io/k8s-dns-dnsmasq-nanny-amd64'
+  - 'image:(.*)gcr.io/k8s-dns-kube-dns-amd64'
+  - 'image:(.*)gcr.io/k8s-dns-sidecar-amd64'
+  - 'image:(.*)gcr.io/kube-proxy'
+  - 'image:(.*)gcr.io/kubernetes-dashboard-amd64'
+  - 'image:(.*)gcr.io/metrics-server-amd64'
+  - 'image:(.*)gcr.io/prometheus-to-sd'
+  # Images used datadog monitoring
+  - 'image:(.*)gcr.io/cs-infrastructure/datadog-agent-6'
+  - 'image:(.*)gcr.io/cs-infrastructure/datadog-cluster-agent-1'
+  - 'image:quay.io/coreos/kube-state-metrics'

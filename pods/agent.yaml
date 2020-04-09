@@ -16,26 +16,22 @@ spec:
     spec:
       serviceAccountName: datadog-agent
       containers:
-      - image: datadog/agent:latest
+      - image: ddagent-jmx
         imagePullPolicy: IfNotPresent
         name: datadog-agent
         ports:
           - {containerPort: 8125, name: dogstatsdport, protocol: UDP}
           - {containerPort: 8126, name: traceport, protocol: TCP}
         env:
-          - {name: DD_API_KEY, value: test}
+          - {name: DD_API_KEY, value: "54b39723f2aa63eb597262b85c1b2658"}
           - {name: KUBERNETES, value: "true"}
           - {name: DD_HEALTH_PORT, value: "5555"}
           - name: DD_KUBERNETES_KUBELET_HOST
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          - name: DD_EXTRA_LISTENERS
-            value: "$DD_EXTRA_LISTENERS"
-          - name: DD_EXTRA_CONFIG_PROVIDERS
-            value: "$DD_EXTRA_CONFIG_PROVIDERS"
-          - name: DD_KUBELET_WAIT_ON_MISSING_CONTAINER
-            value: "1"
+          - name: DD_KUBELET_TLS_VERIFY
+            value: "false"
         volumeMounts:
           - {name: dockersocket, mountPath: /var/run/docker.sock}
           - {name: procdir, mountPath: /host/proc, readOnly: true}
