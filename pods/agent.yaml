@@ -23,7 +23,7 @@ spec:
           - {containerPort: 8125, name: dogstatsdport, protocol: UDP}
           - {containerPort: 8126, name: traceport, protocol: TCP}
         env:
-          - {name: DD_API_KEY, value: "54b39723f2aa63eb597262b85c1b2658"}
+          - {name: DD_API_KEY, value: "test"}
           - {name: KUBERNETES, value: "true"}
           - {name: DD_HEALTH_PORT, value: "5555"}
           - name: DD_KUBERNETES_KUBELET_HOST

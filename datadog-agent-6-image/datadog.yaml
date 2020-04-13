@@ -45,8 +45,7 @@ kubernetes_pod_labels_as_tags:
 # container docker://..., ignoring it."
 kubelet_wait_on_missing_container: 2
 
-# Exclude all containers from kube-system and datadog to save costs.
-# They are either managed completely by google or only concern datadog.
+# These are either managed completely by google or only concern datadog.
 # We are able to see their metrics using the kube-state-metrics data.
 ac_exclude:
   # Images used by kube

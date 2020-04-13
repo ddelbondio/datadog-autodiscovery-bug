@@ -3,30 +3,13 @@ ad_identifiers:
 
 init_config:
   collect_default_metrics: true
-  canonical_rate: true  # boolean to decide whether to use the canonical definition of rate.
-                        # Canonical rates will not submit a negative rate value (considered a reset)
-  # to have better naming for the metrics
+  canonical_rate: true
   new_gc_metrics: true
 
 instances:
   - jmx_url: "service:jmx:remote+http://%%host%%:9990"
-    # We have to set a username and password since the jboss remoting
-    # connector will throw a NPE otherwise. We can't set it to empty
-    # as well, since that will throw an error during the SASL auth.
-    # Since docCreator requires a username, but docrepository doesn't,
-    # we just set the docCreator username/password here
     user: "admin"
     password: "admin"
-
-    #######################################################
-    # ATTENTION!
-    #
-    # Do not use any filter here which would cause
-    # all bean names to be loaded (e.g. the regex ones)
-    # from jboss.as or jboss.as.expr, since that causes
-    # all previous batch job executions to be loaded and
-    # and killing the server
-    #######################################################
 
     conf:
       - include:
@@ -53,12 +36,3 @@ instances:
             TotalProcessingTime:
               alias: jvm.jboss_ws.total_processing_time
               metric_type: gauge
-      # Disabled for now since it causes queryNames() to be called without any filter.
-      # This then causes the wildfly jberet integration to start querying _all_ previous
-      # batchjob executions and load them into memory on the server. This causes a) the entire
-      # memory to be used (we have _a lot_ of batchjob executions) on the server and b) the
-      # request to time out (and being retried shortly after, making things even worse)
-#      - include:
-#          bean_regex: jboss.as:subsystem=datasources,data-source=(.*?),statistics=pool
-#          tags:
-#            datasource: $1

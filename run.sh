@@ -3,7 +3,7 @@
 set -euo pipefail
 
 NS=datadog-agent
-#LOG_TIMEOUT="60s"
+LOG_TIMEOUT="60s"
 
 waitForPodReady() {
   podName="$1"
@@ -57,6 +57,12 @@ stopWildfly() {
   waitForPodDeletion "$podName"
 }
 
+restartAgent() {
+  podName="$(getAgentPodName)"
+  kubectl -n $NS exec "$podName" -- /bin/bash -c "kill 1"
+  waitForPodReady "$podName"
+}
+
 restartWildfly() {
   podName="$(getWildflyPodName)"
   kubectl -n $NS exec "$podName" -- /bin/bash -c "kill 1"
@@ -79,46 +85,54 @@ getWildflyPodName() {
   echo "$(kubectl -n $NS get pods | grep "Running" | egrep -o "wildfly-[^ ]+")"
 }
 
-#grepAgentLogs() {
-#  logFile="$1"
-#  agentPod="$(getAgentPodName)"
-#  kubectl -n $NS logs -f $agentPod | tee -a "\"$logFile\""
-  #if [ "$(timeout "$LOG_TIMEOUT" bash -c "$cmd" | wc -l)" = "$count" ]; then
-  #  echo "success"
-  #else
-  #  echo "fail"
-  #fi
-#}
+grepAgentLogs() {
+  logFile="$1"
+  text="$2"
+  count="$3"
+  agentPod="$(getAgentPodName)"
+  cmd="kubectl -n $NS logs -f $agentPod | tee -a "\"$logFile\"" | stdbuf -oL grep -m $count "\"$text\"" | head -n $count"
+  if [ $(timeout "$LOG_TIMEOUT" bash -c "$cmd" | wc -l) = "$count" ]; then
+    echo "success"
+  else
+    echo "fail"
+  fi
+}
 
 runTest() {
-  config=$1
-  testName=$(basename "$config")
-  echo "[$(date +"%H:%M:%S")] Running test ${testName}"
+  echo "[$(date +"%H:%M:%S")] Running test"
   echo "-------------------------"
   # clear any existing logs
-  mkdir -p "logs/${testName}"
-  rm "logs/${testName}"/* > /dev/null 2>&1 || true
-  source "$config"
+  mkdir -p "logs/"
+  rm "logs/ddagent-jmx.log" > /dev/null 2>&1 || true
   
-  # Test restarting the pod when the agent is already running
-  startWildfly > /dev/null
+  # Test not restarting the pod when the agent is already running
   startAgent > /dev/null
+  startWildfly > /dev/null
+    
+  echo -n "[$(date +"%H:%M:%S")] Agent: running, JVM: no restart => "
+  grepAgentLogs "logs/ddagent-jmx.log" "Instance jmx is sending" 2
+
+  stopWildfly > /dev/null
+  stopAgent > /dev/null
+  echo -e "\n"
+
+  # Test restarting the pod when the agent is already running
+  startAgent > /dev/null
+  startWildfly > /dev/null
   sleep 5
   restartWildfly
   
-  echo -n "[$(date +"%H:%M:%S")] Pod: restart, Agent: running => "
- # grepAgentLogs "logs/${testName}/ddagent-jmx.log"
-  kubectl -n $NS logs -f "$(getAgentPodName)" | tee -a "logs/${testName}/ddagent-jmx.log"
-  echo "Over"
+  echo -n "[$(date +"%H:%M:%S")] Agent: running, JVM: restart => "
+  grepAgentLogs "logs/ddagent-jmx.log" "Instance jmx is sending" 1
 
-  #stopWildfly > /dev/null
-  #stopAgent > /dev/null
+  stopWildfly > /dev/null
+  stopAgent > /dev/null
   echo -e "\n"
 }
 
 echo "Build image"
-docker build -t ddagent-jmx datadog-agent-6-image
-docker build -t wildfly-jmx wildfly-image
+docker build -q -t ddagent-jmx datadog-agent-6-image
+docker build -q -t wildfly-jmx wildfly-image
 
 echo -e "\n"
 
@@ -129,9 +143,7 @@ done
 echo -e "\n"
 
 echo -e "Running tests\n"
-for file in tests/*; do
-  runTest "$file"
-done
+runTest
 
 echo "shutting down"
-#kubectl delete ns $NS
+kubectl delete ns $NS
