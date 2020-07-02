@@ -13,6 +13,8 @@ spec:
       name: wildfly
       labels:
         app: wildfly
+      annotations:
+        ad.datadoghq.com/tolerate-unready: "true"
     spec:
       containers:
       - image: wildfly-jmx
