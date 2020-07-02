@@ -1,4 +1,4 @@
-ARG dd_agent_version=6.18.1-jmx
+ARG dd_agent_version=6.20.1-jmx
 FROM datadog/agent:${dd_agent_version}
 
 ###### ATTENTION ######
